@@ -1,0 +1,37 @@
+clc;clear;close all;
+input_im = imread('../data/image4_input.bmp');
+figure, imshow(input_im), title('Original Image');
+G_r = fft2(input_im(:,:,1),size(input_im,1),size(input_im,2));
+G_g = fft2(input_im(:,:,2),size(input_im,1),size(input_im,2));
+G_b = fft2(input_im(:,:,3),size(input_im,1),size(input_im,2));
+figure, imshow(fftshift(G_r), [0 50000]);
+figure, imshow(fftshift(G_g), [0 50000]);
+figure, imshow(fftshift(G_b), [0 50000]);
+
+% fgauss = lpfilter('gaussian', size(input_im,1), size(input_im,2),0.5);
+fgauss = my_fgauss(5, [11 11]);
+% fgauss = fspecial('gaussian',[11 11],4);
+H = fft2(fftshift(fgauss),size(input_im,1),size(input_im,2));
+% p = [0 -1 0;-1 4 -1; 0 -1 0];
+% P = fft2(p, 2*size(input_im,1), 2*size(input_im,2));
+% figure, imshow(fftshift(real(P)));
+figure, imshow(fftshift(real(H)));
+K = 0.01;
+F_hat_r = (H.*conj(H) ./ (H.*(H.*conj(H) + K))) .* G_r;
+F_hat_g = (H.*conj(H) ./ (H.*(H.*conj(H) + K))) .* G_g;
+F_hat_b = (H.*conj(H) ./ (H.*(H.*conj(H) + K))) .* G_b;
+figure, imshow(fftshift(real(F_hat_r)), [0 50000]);
+figure, imshow(fftshift(real(F_hat_g)), [0 50000]);
+figure, imshow(fftshift(real(F_hat_b)), [0 50000]);
+f_hat_r = uint8(ifft2(F_hat_r));
+f_hat_g = uint8(ifft2(F_hat_g));
+f_hat_b = uint8(ifft2(F_hat_b));
+figure, imshow(f_hat_r, [ ]);
+figure, imshow(f_hat_g, [ ]);
+figure, imshow(f_hat_b, [ ]);
+output_im(:,:,1) = f_hat_r;
+output_im(:,:,2) = f_hat_g;
+output_im(:,:,3) = f_hat_b;
+
+figure, imshowpair(input_im, output_im, 'montage'), title('Input Image vs. Output Image');
+imwrite(output_im, 'output_image.bmp');
